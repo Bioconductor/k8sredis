@@ -10,7 +10,7 @@ spec:
     spec:
       containers:
       - name: worker
-        image: mtmorgan/bioc-redis-worker
+        image: nitesh1989/bioc-redis-worker
         command: ["R"]
         args: ["-f", "/home/docker/worker.R"]
       restartPolicy: OnFailure
