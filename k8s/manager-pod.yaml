@@ -7,7 +7,7 @@ metadata:
 spec:
   containers:
     - name: manager
-      image: nitesh1989/bioc-redis-manager
+      image: nitesh1989/bioc-redis-manager:devel
       env:
         - name: PASSWORD
           value: "bioc"

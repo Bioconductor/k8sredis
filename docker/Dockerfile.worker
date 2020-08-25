@@ -1,12 +1,9 @@
-FROM rocker/r-ver:4.0.2
+FROM bioconductor/bioconductor_docker:devel
 
 RUN apt-get update && \
         apt-get install -y --no-install-recommends libhiredis-dev && \
         rm -rf /var/lib/apt/lists/*
 
-WORKDIR /tmp
-COPY install.R .
-RUN R -f install.R && rm install.R
-WORKDIR /
+RUN R -e 'BiocManager::install("mtmorgan/RedisParam")'
 
 COPY worker.R /home/docker/

@@ -156,8 +156,8 @@ Docker images for the manager and worker are available at dockerhub as
 [mtmorgan/bioc-redis-manager][] and
 [mtmorgan/bioc-redis-worker][]. They were built as
 
-    docker build -t bioc-redis-worker -f docker/Dockerfile.worker docker
-    docker build -t bioc-redis-manager -f docker/Dockerfile.manager docker
+    docker build -t nitesh1989/bioc-redis-worker:devel -f docker/Dockerfile.worker docker
+    docker build -t nitesh1989/bioc-redis-manager:devel -f docker/Dockerfile.manager docker
 
 [mtmorgan/bioc-redis-manager]: https://cloud.docker.com/u/mtmorgan/repository/docker/mtmorgan/bioc-redis-manager
 [mtmorgan/bioc-redis-worker]: https//cloud.docker.com/u/mtmorgan/repository/docker/mtmorgan/bioc-redis-worker
