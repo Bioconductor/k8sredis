@@ -8,6 +8,9 @@ spec:
   containers:
     - name: manager
       image: nitesh1989/bioc-redis-manager:devel
+      volumeMounts:
+        - mountPath: /host
+          name: host-mount
       env:
         - name: PASSWORD
           value: "bioc"
@@ -15,3 +18,7 @@ spec:
         - containerPort: 8787
       command: ["/init"]
   restartPolicy: "OnFailure"
+  volumes:
+  - name: host-mount
+    hostPath:
+      path: "/host"

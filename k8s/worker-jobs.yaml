@@ -11,6 +11,13 @@ spec:
       containers:
       - name: worker
         image: nitesh1989/bioc-redis-worker:devel
+        volumeMounts:
+        - mountPath: /host
+          name: host-mount
         command: ["R"]
         args: ["-f", "/home/docker/worker.R"]
       restartPolicy: OnFailure
+      volumes:
+      - name: host-mount
+        hostPath:
+          path: "/host"
