@@ -27,17 +27,18 @@ do = inst[,"Package"][inst[,"Priority"] %in% "base"]
 deps = deps[!names(deps) %in% do]
 
 length(deps)
-
 table(lengths(deps))
 
-## 
+#############
+## Install
+#############
 
 library(RedisParam)
 
 p <- RedisParam(workers = 5, jobname = "install", is.worker = FALSE)
 
-fun <- function(pkg) {
-    message("Package name: ", pkg)
+fun <- function(pkg, lib) {
+    .libPaths(c(lib, .libPaths())
     BiocManager::install(pkg)
     Sys.info()[["nodename"]]
 }
@@ -46,7 +47,7 @@ while (length(deps)) {
     deps = trim(deps, do)
     do = names(deps)[lengths(deps) == 0L]
     ## do the work here
-    bplapply(do, fun, BPPARAM = p)
+    res <- bplapply(head(do[-1],10), fun, BPPARAM = p, lib = "/host")
     message(length(deps), " " , length(do))
     deps = deps[!names(deps) %in% do]
 }

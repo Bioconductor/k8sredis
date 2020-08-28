@@ -7,4 +7,5 @@ RUN apt-get update && \
 RUN R -e 'BiocManager::install("mtmorgan/RedisParam")'
 
 COPY manager.R /home/rstudio/
+COPY pkg_dependency_graph.R /home/rstudio
 COPY 01-Renviron /etc/cont-init.d/01-Renviron
