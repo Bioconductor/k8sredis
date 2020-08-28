@@ -30,17 +30,23 @@ length(deps)
 
 table(lengths(deps))
 
+## 
+
 library(RedisParam)
 
-p <- RedisParam(workers = 5, jobname = "install_packages", is.worker = FALSE)
+p <- RedisParam(workers = 5, jobname = "install", is.worker = FALSE)
+
+fun <- function(pkg) {
+    message("Package name: ", pkg)
+    BiocManager::install(pkg)
+    Sys.info()[["nodename"]]
+}
 
 while (length(deps)) {
     deps = trim(deps, do)
     do = names(deps)[lengths(deps) == 0L]
-    do = do[1:5]
     ## do the work here
-    bplapply(do, function(x) BiocManager::install(x), BPPARAM = p)
-    ##
+    bplapply(do, fun, BPPARAM = p)
     message(length(deps), " " , length(do))
     deps = deps[!names(deps) %in% do]
 }
