@@ -190,3 +190,22 @@ that a one-liner will give a URL to a running RStudio backed by
 arbitary number of workers.
 
 [helm]: https://helm.sh/
+
+
+## Test persistent disk
+
+### Create repo on GCR and upload docker images
+
+gcloud container images list --repository us.gcr.io/bioconductor-rpci-280116
+
+### Create disk
+
+gcloud compute disks create --size=500GB --zone=us-east1-b nt-data-disk
+
+gcloud container clusters create --zone us-east1-b --num-nodes=5 niteshk8scluster
+
+gcloud container clusters get-credentials niteshk8scluster
+
+gcloud compute firewall-rules create test-node-port --allow tcp:30001
+
+kubectl apply -f k8s/

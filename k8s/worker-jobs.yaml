@@ -10,14 +10,15 @@ spec:
     spec:
       containers:
       - name: worker
-        image: nitesh1989/bioc-redis-worker:devel
+        image: us.gcr.io/bioconductor-rpci-280116/bioc-redis-worker:devel
         volumeMounts:
         - mountPath: /host
-          name: host-mount
+          name: test-mount
         command: ["R"]
         args: ["-f", "/home/docker/worker.R"]
       restartPolicy: OnFailure
       volumes:
-      - name: host-mount
-        hostPath:
-          path: "/host"
+      - name: test-mount
+        gcePersistentDisk:
+          pdName: nt-data-disk
+          fsType: ext4

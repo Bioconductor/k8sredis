@@ -7,10 +7,10 @@ metadata:
 spec:
   containers:
     - name: manager
-      image: nitesh1989/bioc-redis-manager:devel
+      image: us.gcr.io/bioconductor-rpci-280116/bioc-redis-manager:devel
       volumeMounts:
         - mountPath: /host
-          name: host-mount
+          name: test-mount
       env:
         - name: PASSWORD
           value: "bioc"
@@ -19,6 +19,7 @@ spec:
       command: ["/init"]
   restartPolicy: "OnFailure"
   volumes:
-  - name: host-mount
-    hostPath:
-      path: "/host"
+  - name: test-mount
+    gcePersistentDisk:
+      pdName: nt-data-disk
+      fsType: ext4
