@@ -37,17 +37,25 @@ library(RedisParam)
 
 p <- RedisParam(workers = 5, jobname = "install", is.worker = FALSE)
 
-fun <- function(pkg, lib) {
-    .libPaths(c(lib, .libPaths())
+dir.create("/host/library")
+
+dir.create("/host/binaries")
+
+fun1 <- function(pkg, lib) {
+    .libPaths(c(lib, .libPaths()))
+    ## Step1: Install
     BiocManager::install(pkg)
     Sys.info()[["nodename"]]
+
+    ## Step2: Tar it up
+    tools::
 }
 
 while (length(deps)) {
     deps = trim(deps, do)
     do = names(deps)[lengths(deps) == 0L]
     ## do the work here
-    res <- bplapply(head(do[-1],10), fun, BPPARAM = p, lib = "/host")
+    res <- bplapply(head(do[-1],10), fun, BPPARAM = p, lib = "/host/library")
     message(length(deps), " " , length(do))
     deps = deps[!names(deps) %in% do]
 }

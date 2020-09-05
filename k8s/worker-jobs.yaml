@@ -3,7 +3,7 @@ kind: Job
 metadata:
   name: worker
 spec:
-  parallelism: 5
+  parallelism: 3
   template:
     metadata:
       name: worker
@@ -13,12 +13,12 @@ spec:
         image: us.gcr.io/bioconductor-rpci-280116/bioc-redis-worker:devel
         volumeMounts:
         - mountPath: /host
-          name: test-mount
+          name: test-nfs-mount
         command: ["R"]
         args: ["-f", "/home/docker/worker.R"]
       restartPolicy: OnFailure
       volumes:
-      - name: test-mount
-        gcePersistentDisk:
-          pdName: nt-data-disk
-          fsType: ext4
+      - name: test-nfs-mount
+        nfs:
+          server: 10.3.240.186
+          path: /

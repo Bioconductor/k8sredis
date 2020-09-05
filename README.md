@@ -200,7 +200,94 @@ gcloud container images list --repository us.gcr.io/bioconductor-rpci-280116
 
 ### Create disk
 
-gcloud compute disks create --size=500GB --zone=us-east1-b nt-data-disk
+https://kubernetes.io/docs/concepts/storage/volumes/#gcepersistentdisk
+
+- `gcePersistentDisk` doesn't work since the volume can be mounted on
+  only a single pod at a time.
+
+```
+A feature of PD is that they can be mounted as read-only by multiple
+consumers simultaneously. This means that you can pre-populate a PD
+with your dataset and then serve it in parallel from as many Pods as
+you need. Unfortunately, PDs can only be mounted by a single consumer
+in read-write mode - no simultaneous writers allowed.
+```
+
+Command to start disk:
+
+	gcloud compute disks create --size=500GB --zone=us-east1-b nt-data-disk
+
+Error state:
+
+```
+~ ❯❯❯ kubectl describe pod/worker-4c6c4
+Name:           worker-4c6c4
+Namespace:      default
+Priority:       0
+Node:           gke-niteshk8scluster-default-pool-c33c9779-7j09/10.142.0.15
+Start Time:     Fri, 04 Sep 2020 08:24:56 -0400
+Labels:         controller-uid=e38b3ce9-09ff-4abc-b182-b166fb597626
+                job-name=worker
+Annotations:    kubernetes.io/limit-ranger: LimitRanger plugin set: cpu request for container worker
+Status:         Pending
+IP:
+IPs:            <none>
+Controlled By:  Job/worker
+Containers:
+  worker:
+    Container ID:
+    Image:         us.gcr.io/bioconductor-rpci-280116/bioc-redis-worker:devel
+    Image ID:
+    Port:          <none>
+    Host Port:     <none>
+    Command:
+      R
+    Args:
+      -f
+      /home/docker/worker.R
+    State:          Waiting
+      Reason:       ContainerCreating
+    Ready:          False
+    Restart Count:  0
+    Requests:
+      cpu:        100m
+    Environment:  <none>
+    Mounts:
+      /host from test-mount (rw)
+      /var/run/secrets/kubernetes.io/serviceaccount from default-token-6r876 (ro)
+Conditions:
+  Type              Status
+  Initialized       True
+  Ready             False
+  ContainersReady   False
+  PodScheduled      True
+Volumes:
+  test-mount:
+    Type:       GCEPersistentDisk (a Persistent Disk resource in Google Compute Engine)
+    PDName:     nt-data-disk
+    FSType:     ext4
+    Partition:  0
+    ReadOnly:   false
+  default-token-6r876:
+    Type:        Secret (a volume populated by a Secret)
+    SecretName:  default-token-6r876
+    Optional:    false
+QoS Class:       Burstable
+Node-Selectors:  <none>
+Tolerations:     node.kubernetes.io/not-ready:NoExecute for 300s
+                 node.kubernetes.io/unreachable:NoExecute for 300s
+Events:
+  Type     Reason              Age               From                     Message
+  ----     ------              ----              ----                     -------
+  Normal   Scheduled           42s               default-scheduler        Successfully assigned default/worker-4c6c4 to gke-niteshk8scluster-default-pool-c33c9779-7j09
+  Warning  FailedAttachVolume  3s (x5 over 36s)  attachdetach-controller  AttachVolume.Attach failed for volume "test-mount" : googleapi: Error 400: RESOURCE_IN_USE_BY_ANOTHER_RESOURCE - The disk resource 'projects/bioconductor-rpci-280116/zones/us-east1-b/disks/nt-data-disk' is already being used by 'projects/bioconductor-rpci-280116/zones/us-east1-b/instances/gke-niteshk8scluster-default-pool-c33c9779-jw3l'
+ ```
+
+### Mount NFS volume
+
+https://github.com/kubernetes/examples/tree/master/staging/volumes/nfs
+
+### Start k8s cluster
 
 gcloud container clusters create --zone us-east1-b --num-nodes=5 niteshk8scluster
 
@@ -209,3 +296,9 @@ gcloud container clusters get-credentials niteshk8scluster
 gcloud compute firewall-rules create test-node-port --allow tcp:30001
 
 kubectl apply -f k8s/
+
+### delete k8s cluster
+
+kubectl delete -f k8s/
+
+gcloud container clusters delete niteshk8scluster

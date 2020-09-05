@@ -10,7 +10,7 @@ spec:
       image: us.gcr.io/bioconductor-rpci-280116/bioc-redis-manager:devel
       volumeMounts:
         - mountPath: /host
-          name: test-mount
+          name: test-nfs-mount
       env:
         - name: PASSWORD
           value: "bioc"
@@ -19,7 +19,7 @@ spec:
       command: ["/init"]
   restartPolicy: "OnFailure"
   volumes:
-  - name: test-mount
-    gcePersistentDisk:
-      pdName: nt-data-disk
-      fsType: ext4
+  - name: test-nfs-mount
+    nfs:
+      server: 10.3.240.186
+      path: /
