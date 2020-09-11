@@ -1,4 +1,3 @@
-## Find package dependencies
 pkg_depedencies <-
     function()
 {
@@ -29,43 +28,46 @@ trim <- function(deps, drop) {
 kube_install <-
     function(pkg, lib, bin)
 {
-    browser()
-    .libPaths(c(lib, .libPaths()))
-    ## Step1: Install
-    BiocManager::install(pkg)
-    Sys.info()[["nodename"]]
-
-    ## Step2: Tar it up
-    ##    BiocManager::install(pkg, INSTALL_opts = "-build")
-    devtools::build(pkg, binary=TRUE, path = bin)
+    tryCatch({
+        .libPaths(c(lib, .libPaths()))
+        ## Step1: Install
+        cwd <- setwd(bin)
+        on.exit(setwd(cwd))
+        BiocManager::install(pkg, INSTALL_opts = "--build", update=FALSE, quiet=TRUE)
+        Sys.info()[["nodename"]]
+    }, error = function(e) {
+        conditionMessage(e)
+    })
 }
 
 run_install <-
     function(workers, lib_path, bin_path, deps, inst)
 {
     library(RedisParam)
-    p <- RedisParam(workers = workers,
-                    jobname = "install",
-                    is.worker = FALSE)
 
     ## drop these on the first iteration
     do <- inst[,"Package"][inst[,"Priority"] %in% "base"]
     deps <- deps[!names(deps) %in% do]
 
+    p <- RedisParam(workers = workers, jobname = "demo",
+                        is.worker = FALSE, tasks=length(deps),
+                        progressbar = TRUE)
+    bpstart(p)
+
     while (length(deps)) {
         deps <- trim(deps, do)
         do <- names(deps)[lengths(deps) == 0L]
         ## do the work here
-        message("here")
         res <- bplapply(
-            do[2,3], kube_install, BPPARAM = p,
+            do, kube_install, BPPARAM = p,
             lib = lib_path,
             bin = bin_path
         )
-        break
         message(length(deps), " " , length(do))
         deps <- deps[!names(deps) %in% do]
     }
+    bpstop(p)
+    res
 }
 
 
@@ -74,14 +76,17 @@ dir.create("/host/library", recursive = TRUE)
 dir.create("/host/binaries", recursive = TRUE)
 
 ## Test
-deps <- pkg_depedencies()
+deps_rds <- "pkg_dependencies.rds"
+if (!file.exists(deps_rds)) {
+    deps <- pkg_depedencies()
+    saveRDS(deps, deps_rds)
+}
+deps <- readRDS(deps_rds)
+
 inst <- installed.packages()
 
-library <- "/host/library/"
-binanies <- "/host/binaries/"
-
-run_install(workers = 5,
-            lib_path = library,
-            bin_path = binaries,
+run_install(workers = 8,
+            lib_path = "/host/library/",
+            bin_path = "/host/binaries/",
             deps = deps,
             inst = inst)

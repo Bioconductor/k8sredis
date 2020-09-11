@@ -21,5 +21,6 @@ spec:
   volumes:
   - name: test-nfs-mount
     nfs:
-      server: 10.3.240.186
+      #server: 10.3.249.132
+      server: nfs-server
       path: /

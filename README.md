@@ -289,13 +289,45 @@ https://github.com/kubernetes/examples/tree/master/staging/volumes/nfs
 
 ### Start k8s cluster
 
-gcloud container clusters create --zone us-east1-b --num-nodes=5 niteshk8scluster
+	## Max quota of nodes = 8
+	## Manage quotas at https://console.cloud.google.com/iam-admin/quotas?usage=USED&project=bioconductor-rpci-280116.
+	gcloud container clusters create --zone us-east1-b --num-nodes=8 niteshk8scluster
 
-gcloud container clusters get-credentials niteshk8scluster
+	gcloud container clusters get-credentials niteshk8scluster
+	
+	gcloud compute firewall-rules create test-node-port --allow tcp:30001
+	
+### NFS cluster
 
-gcloud compute firewall-rules create test-node-port --allow tcp:30001
+Start service NFS
 
-kubectl apply -f k8s/
+	## NFS volume needs to be 500Gi to accomodate both libraries and binaries
+	kubectl create -f k8s/nfs-server-gce-pv.yaml
+	
+	kubectl create -f k8s/nfs-server-rc.yaml
+	
+	kubectl create -f k8s/nfs-server-service.yaml
+
+**get the cluster IP of the server using the following command**
+
+	kubectl describe services nfs-server
+
+**use the NFS server IP to update nfs-pv.yaml and execute the following**
+
+	# Also update the IP in manager.yaml and worker-jobs.yaml
+	kubectl create -f k8s/nfs-pv.yaml
+
+then,
+	
+	kubectl create -f k8s/nfs-pvc.yaml
+
+	kubectl apply -f k8s/
+	
+	kubectl create -f k8s/rstudio-service.yaml
+	kubectl create -f k8s/redis-service.yaml
+	kubectl create -f k8s/redis-pod.yaml
+	kubectl create -f k8s/manager-pod.yaml
+	kubectl create -f k8s/worker-jobs.yaml
 
 ### delete k8s cluster
 
