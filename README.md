@@ -191,14 +191,52 @@ arbitary number of workers.
 
 [helm]: https://helm.sh/
 
-
-## Test persistent disk
+## Test NFS persistent disk
 
 ### Create repo on GCR and upload docker images
 
 gcloud container images list --repository us.gcr.io/bioconductor-rpci-280116
 
-### Create disk
+### Mount NFS volume
+
+https://github.com/kubernetes/examples/tree/master/staging/volumes/nfs
+
+### Start k8s cluster
+
+	## Max quota of nodes = 8
+	## Manage quotas at https://console.cloud.google.com/iam-admin/quotas?usage=USED&project=bioconductor-rpci-280116.
+	gcloud container clusters create --zone us-east1-b --num-nodes=8 niteshk8scluster
+
+	gcloud container clusters get-credentials niteshk8scluster
+	
+	gcloud compute firewall-rules create test-node-port --allow tcp:30001
+	
+### NFS cluster
+
+Start service NFS
+
+	## NFS volume needs to be 500Gi to accomodate both libraries and binaries
+	kubectl create -f k8s/nfs-server-gce-pv.yaml
+	kubectl create -f k8s/nfs-server-rc.yaml
+	kubectl create -f k8s/nfs-server-service.yaml
+	kubectl create -f k8s/nfs-pv.yaml
+	kubectl create -f k8s/nfs-pvc.yaml
+
+Start Redis, Rstudio, Manager and worker pods
+
+	kubectl create -f k8s/rstudio-service.yaml
+	kubectl create -f k8s/redis-service.yaml
+	kubectl create -f k8s/redis-pod.yaml
+	kubectl create -f k8s/manager-pod.yaml
+	kubectl create -f k8s/worker-jobs.yaml
+
+### delete k8s cluster
+
+kubectl delete -f k8s/
+
+gcloud container clusters delete niteshk8scluster
+
+### Create GCE persistent disk - DOES NOT WORK
 
 https://kubernetes.io/docs/concepts/storage/volumes/#gcepersistentdisk
 
@@ -221,116 +259,9 @@ Error state:
 
 ```
 ~ ❯❯❯ kubectl describe pod/worker-4c6c4
-Name:           worker-4c6c4
-Namespace:      default
-Priority:       0
-Node:           gke-niteshk8scluster-default-pool-c33c9779-7j09/10.142.0.15
-Start Time:     Fri, 04 Sep 2020 08:24:56 -0400
-Labels:         controller-uid=e38b3ce9-09ff-4abc-b182-b166fb597626
-                job-name=worker
-Annotations:    kubernetes.io/limit-ranger: LimitRanger plugin set: cpu request for container worker
-Status:         Pending
-IP:
-IPs:            <none>
-Controlled By:  Job/worker
-Containers:
-  worker:
-    Container ID:
-    Image:         us.gcr.io/bioconductor-rpci-280116/bioc-redis-worker:devel
-    Image ID:
-    Port:          <none>
-    Host Port:     <none>
-    Command:
-      R
-    Args:
-      -f
-      /home/docker/worker.R
-    State:          Waiting
-      Reason:       ContainerCreating
-    Ready:          False
-    Restart Count:  0
-    Requests:
-      cpu:        100m
-    Environment:  <none>
-    Mounts:
-      /host from test-mount (rw)
-      /var/run/secrets/kubernetes.io/serviceaccount from default-token-6r876 (ro)
-Conditions:
-  Type              Status
-  Initialized       True
-  Ready             False
-  ContainersReady   False
-  PodScheduled      True
-Volumes:
-  test-mount:
-    Type:       GCEPersistentDisk (a Persistent Disk resource in Google Compute Engine)
-    PDName:     nt-data-disk
-    FSType:     ext4
-    Partition:  0
-    ReadOnly:   false
-  default-token-6r876:
-    Type:        Secret (a volume populated by a Secret)
-    SecretName:  default-token-6r876
-    Optional:    false
-QoS Class:       Burstable
-Node-Selectors:  <none>
-Tolerations:     node.kubernetes.io/not-ready:NoExecute for 300s
-                 node.kubernetes.io/unreachable:NoExecute for 300s
 Events:
   Type     Reason              Age               From                     Message
   ----     ------              ----              ----                     -------
   Normal   Scheduled           42s               default-scheduler        Successfully assigned default/worker-4c6c4 to gke-niteshk8scluster-default-pool-c33c9779-7j09
   Warning  FailedAttachVolume  3s (x5 over 36s)  attachdetach-controller  AttachVolume.Attach failed for volume "test-mount" : googleapi: Error 400: RESOURCE_IN_USE_BY_ANOTHER_RESOURCE - The disk resource 'projects/bioconductor-rpci-280116/zones/us-east1-b/disks/nt-data-disk' is already being used by 'projects/bioconductor-rpci-280116/zones/us-east1-b/instances/gke-niteshk8scluster-default-pool-c33c9779-jw3l'
  ```
-
-### Mount NFS volume
-
-https://github.com/kubernetes/examples/tree/master/staging/volumes/nfs
-
-### Start k8s cluster
-
-	## Max quota of nodes = 8
-	## Manage quotas at https://console.cloud.google.com/iam-admin/quotas?usage=USED&project=bioconductor-rpci-280116.
-	gcloud container clusters create --zone us-east1-b --num-nodes=8 niteshk8scluster
-
-	gcloud container clusters get-credentials niteshk8scluster
-	
-	gcloud compute firewall-rules create test-node-port --allow tcp:30001
-	
-### NFS cluster
-
-Start service NFS
-
-	## NFS volume needs to be 500Gi to accomodate both libraries and binaries
-	kubectl create -f k8s/nfs-server-gce-pv.yaml
-	
-	kubectl create -f k8s/nfs-server-rc.yaml
-	
-	kubectl create -f k8s/nfs-server-service.yaml
-
-**get the cluster IP of the server using the following command**
-
-	kubectl describe services nfs-server
-
-**use the NFS server IP to update nfs-pv.yaml and execute the following**
-
-	# Also update the IP in manager.yaml and worker-jobs.yaml
-	kubectl create -f k8s/nfs-pv.yaml
-
-then,
-	
-	kubectl create -f k8s/nfs-pvc.yaml
-
-	kubectl apply -f k8s/
-	
-	kubectl create -f k8s/rstudio-service.yaml
-	kubectl create -f k8s/redis-service.yaml
-	kubectl create -f k8s/redis-pod.yaml
-	kubectl create -f k8s/manager-pod.yaml
-	kubectl create -f k8s/worker-jobs.yaml
-
-### delete k8s cluster
-
-kubectl delete -f k8s/
-
-gcloud container clusters delete niteshk8scluster

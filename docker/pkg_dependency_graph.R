@@ -8,10 +8,10 @@ pkg_depedencies <-
     deps0 <- tools::package_dependencies(rownames(soft), db, recursive=TRUE)
     ## return deps
     tools::package_dependencies(
-        union(names(deps0), unlist(deps0, use.names = FALSE)),
-        db,
-        recursive=TRUE
-    )
+               union(names(deps0), unlist(deps0, use.names = FALSE)),
+               db,
+               recursive=TRUE
+           )
 }
 
 ## munge deps
@@ -44,14 +44,13 @@ run_install <-
     function(workers, lib_path, bin_path, deps, inst)
 {
     library(RedisParam)
-
     ## drop these on the first iteration
     do <- inst[,"Package"][inst[,"Priority"] %in% "base"]
     deps <- deps[!names(deps) %in% do]
 
     p <- RedisParam(workers = workers, jobname = "demo",
-                        is.worker = FALSE, tasks=length(deps),
-                        progressbar = TRUE)
+                    is.worker = FALSE, tasks=length(deps),
+                    progressbar = TRUE)
     bpstart(p)
 
     while (length(deps)) {
