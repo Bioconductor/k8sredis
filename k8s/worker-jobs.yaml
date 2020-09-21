@@ -19,7 +19,5 @@ spec:
       restartPolicy: OnFailure
       volumes:
       - name: test-nfs-mount
-        nfs:
-          #server: 10.3.249.132
-          server: nfs-server
-          path: /
+        persistentVolumeClaim:
+          claimName: nfs
