@@ -10,7 +10,7 @@ spec:
       image: us.gcr.io/bioconductor-rpci-280116/bioc-redis-manager:devel
       volumeMounts:
         - mountPath: /host
-          name: test-nfs-mount
+          name: test-azure-mount
       env:
         - name: PASSWORD
           value: "bioc"
@@ -19,6 +19,6 @@ spec:
       command: ["/init"]
   restartPolicy: "OnFailure"
   volumes:
-  - name: test-nfs-mount
+  - name: test-azure-mount
     persistentVolumeClaim:
-      claimName: nfs
+      claimName: my-azurefile
