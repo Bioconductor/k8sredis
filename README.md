@@ -14,7 +14,7 @@ Use minikube for (local) development, or gcloud for scalable deployment.
 
 Start the minikube VM with
 
-    minikube start
+	minikube start
 
 For gcloud, see [below][].
 
@@ -26,82 +26,82 @@ In kubernetes, create a redis service and running redis application,
 an _RStudio_ service, an _RStudio_ 'manager', and five _R_ worker
 'jobs'.
 
-    kubectl apply -f k8s/
+	kubectl apply -f k8s/
 
 The two services, redis and manager pods, and worker pods should all
 be visible and healthy with
 
-    kubectl get all
+	kubectl get all
 
 ## Log in to R
 
 Via your browser on the port 300001 at the ip address returned by
 minikube or gcloud
 
-    ## For minikube, use...
-    minikube ip
+	## For minikube, use...
+	minikube ip
 
-    ## For gcloud, use any 'EXTERNAL-IP' from
-    kubectl get nodes --output wide
+	## For gcloud, use any 'EXTERNAL-IP' from
+	kubectl get nodes --output wide
 
 e.g.,
 
-    http://192.168.99.101:30001
+	http://192.168.99.101:30001
 
 this will provide access to RStudio, with user `rstudio` and password
 `bioc`. Alternatively, connect to R at the command line with
 
-    kubectl exec -it manager -- /bin/bash
+	kubectl exec -it manager -- /bin/bash
 
 ## Use
 
 Define a simple function
 
-    fun = function(i) {
-        Sys.sleep(1)
-        Sys.info()[["nodename"]]
-    }
+	fun = function(i) {
+		Sys.sleep(1)
+		Sys.info()[["nodename"]]
+	}
 
 Create a `RedisParam` to connect to the job queue and communicate with
 the workers, and use `BiocParallel::register()` to make this the
 default back-end
 
-    library(RedisParam)
+	library(RedisParam)
 
-    p <- RedisParam(workers = 5, jobname = "demo", is.worker = FALSE)
-    register(bpstart(p))
+	p <- RedisParam(workers = 5, jobname = "demo", is.worker = FALSE)
+	register(bpstart(p))
 
 Use `bplapply()` for parallel evaluation
 
-    system.time(res <- bplapply(1:13, fun))
-    table(unlist(res))
+	system.time(res <- bplapply(1:13, fun))
+	table(unlist(res))
 
 ## Clean up
 
 Quit and exit the R manager (or simply leave your RStudio session in
 the browser)
 
-    > q()     # R
-    # exit    # manager
+	> q()     # R
+	# exit    # manager
 
 Clean up kubernetes
 
-    $ kubectl delete -f k8s/
+	$ kubectl delete -f k8s/
 
 Stop minikube or gcloud
 
-    ## minikube...
-    minikube stop
+	## minikube...
+	minikube stop
 
-    ## ..or gcloud
-    gcloud container clusters delete [CLUSTER_NAME]
+	## ..or gcloud
+	gcloud container clusters delete [CLUSTER_NAME]
 
 # Google cloud [WORK IN PROGRESS]
 
 One uses Google kubernetes service rather than minikube. Make sure
 that minikube is not running
 
-    minikube stop
+	minikube stop
 
 ## Enable kubernetes service
 
@@ -119,8 +119,8 @@ ENABLE APIS & SERVICES` (center top).
 At the command line, make sure the correct account is activated and
 the correct project associated with the account
 
-    gcloud auth list
-    gclod config list
+	gcloud auth list
+	gclod config list
 
 Use `gcloud config help` / `gcloud config set help` and eventually
 `gcloud config set core/project VALUE` to udpate the project and
@@ -134,16 +134,16 @@ closely follow the section [Creating a Service of type NodePort][2].
 Create a cluster (replace `[CLUSTER_NAME]` with an appropriate
 identifier)
 
-    gcloud container clusters create [CLUSTER_NAME]
+	gcloud container clusters create [CLUSTER_NAME]
 
 Authenticate with the cluster
 
-    gcloud container clusters get-credentials [CLUSTER_NAME]
+	gcloud container clusters get-credentials [CLUSTER_NAME]
 
 Create a whole in the firewall that surrounds our cloud (30001 is from
 k8s/rstudio-service.yaml)
 
-    gcloud compute firewall-rules create test-node-port --allow tcp:30001
+	gcloud compute firewall-rules create test-node-port --allow tcp:30001
 
 At this stage, we can use `kubectl apply ...` etc., as above.
 
@@ -152,15 +152,17 @@ At this stage, we can use `kubectl apply ...` etc., as above.
 
 # Docker images
 
-Docker images for the manager and worker are available at dockerhub as
-[mtmorgan/bioc-redis-manager][] and
-[mtmorgan/bioc-redis-worker][]. They were built as
+The Docker images are available as [bioc-redis-manager:devel][] and
+[bioc-redis-worker:devel][].
 
-    docker build -t nitesh1989/bioc-redis-worker:devel -f docker/Dockerfile.worker docker
-    docker build -t nitesh1989/bioc-redis-manager:devel -f docker/Dockerfile.manager docker
+	docker build -t us.gcr.io/bioconductor-rpci-280116/bioc-redis-manager:devel \
+		-f docker/Dockerfile.manager docker
 
-[mtmorgan/bioc-redis-manager]: https://cloud.docker.com/u/mtmorgan/repository/docker/mtmorgan/bioc-redis-manager
-[mtmorgan/bioc-redis-worker]: https//cloud.docker.com/u/mtmorgan/repository/docker/mtmorgan/bioc-redis-worker
+	docker build -t us.gcr.io/bioconductor-rpci-280116/bioc-redis-worker:devel \
+		-f docker/Dockerfile.worker docker
+
+[bioc-redis-manager:devel]: us.gcr.io/bioconductor-rpci-280116/bioc-redis-manager
+[bioc-redis-worker:devel]: us.gcr.io/bioconductor-rpci-280116/bioc-redis-worker
 
 The _R_ manager docker file -- is from `rocker/rstudio:3.6.0`
 providing _R_ _RStudio_ server, and additional infrastructure to
@@ -177,8 +179,8 @@ like [Bioconductor/AnVIL_Docker][] customized with required packages.
 
 For use of local images, one needs to build these in the minikube environment
 
-    eval $(minikube docker-env)
-    docker build ...
+	eval $(minikube docker-env)
+	docker build ...
 
 # TODO
 
@@ -208,9 +210,9 @@ https://github.com/kubernetes/examples/tree/master/staging/volumes/nfs
 	gcloud container clusters create --zone us-east1-b --num-nodes=8 niteshk8scluster
 
 	gcloud container clusters get-credentials niteshk8scluster
-	
+
 	gcloud compute firewall-rules create test-node-port --allow tcp:30001
-	
+
 ### NFS cluster
 
 Start service NFS
@@ -236,7 +238,19 @@ kubectl delete -f k8s/
 
 gcloud container clusters delete niteshk8scluster
 
-### Create GCE persistent disk - DOES NOT WORK
+
+### TODO
+
+1. Move binaries from NFS to bucket
+
+2. Figure out the progress bar / tasks in redis param. This seems to
+   be stopping.
+   
+3. Pod eviction happens even after setting resource limits. Investigate more.
+   - Martin's question, we can make sure POD gets evicted.
+   - Use flag `--eviction-hard` 
+
+#### Create GCE persistent disk - DOES NOT WORK
 
 https://kubernetes.io/docs/concepts/storage/volumes/#gcepersistentdisk
 
