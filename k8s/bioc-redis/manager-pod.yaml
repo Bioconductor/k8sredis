@@ -8,9 +8,19 @@ spec:
   containers:
     - name: manager
       image: us.gcr.io/bioconductor-rpci-280116/bioc-redis-manager:devel
+      resources:
+        requests:
+          memory: 1000Mi
+          cpu: 500m
+        limits:
+          memory: 2500Mi
+          cpu: 900m
       volumeMounts:
-        - mountPath: /host
-          name: test-nfs-mount
+        - name: test-nfs-mount
+          mountPath: /host
+        - name: service-key
+          mountPath: /home/rstudio/key.json
+          subPath: bioconductor-rpci-280116-6b5690824bc0.json
       env:
         - name: PASSWORD
           value: "bioc"
@@ -22,3 +32,9 @@ spec:
   - name: test-nfs-mount
     persistentVolumeClaim:
       claimName: nfs
+  - name: service-key
+    secret:
+      secretName: bioc-binaries-service-account-auth
+      items:
+        - key: service_account_key
+          path: bioconductor-rpci-280116-6b5690824bc0.json

@@ -11,6 +11,13 @@ spec:
       containers:
       - name: worker
         image: us.gcr.io/bioconductor-rpci-280116/bioc-redis-worker:devel
+        resources:
+          requests:
+            memory: 800Mi
+            cpu: 500m
+          limits:
+            memory: 2000Mi
+            cpu: 900m
         volumeMounts:
         - mountPath: /host
           name: test-nfs-mount

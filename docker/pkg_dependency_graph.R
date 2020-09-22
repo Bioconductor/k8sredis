@@ -54,7 +54,7 @@ run_install <-
         p <- RedisParam(workers = workers, jobname = "demo",
                         is.worker = FALSE, tasks=length(do),
                         progressbar = TRUE)
-        
+
         ## do the work here
         res <- bplapply(
             head(do), kube_install, BPPARAM = p,
@@ -71,8 +71,11 @@ run_install <-
 
 
 ## Step 1: Create host directories if they don't exist already
-dir.create("/host/library", recursive = TRUE)
-dir.create("/host/binaries", recursive = TRUE)
+lib_path <- "/host/library"
+bin_path <- "/host/binaries"
+
+dir.create(lib_path, recursive = TRUE)
+dir.create(bin_path, recursive = TRUE)
 
 ## To reload quickly
 deps_rds <- "pkg_dependencies.rds"
@@ -85,14 +88,28 @@ deps <- readRDS(deps_rds)
 inst <- installed.packages()
 
 run_install(workers = 8,
-            lib_path = "/host/library/",
-            bin_path = "/host/binaries/",
+            lib_path = lib_path,
+            bin_path = bin_path,
             deps = deps,
             inst = inst)
 
-## Create PACKAGES.gz and 
-tools::write_PACAKGES("/host/binaries", addFiles=TRUE)
+## Create PACKAGES.gz and
+tools::write_PACAKGES(bin_path, addFiles=TRUE)
 
-## overwrite PACAKGES.gz in the bucket.
-## provide secret to gcloud for gsutil to transfer packages
-AnVIL::gsutil_rsync("/host/binaries/", "gs://anvil-rstudio-bioconductor-test/0.99/3.11/src/contrib/", dry=FALSE)
+## authenticate with secret
+system2('gcloud',
+    args = c(
+        'auth', 'activate-service-account',
+        '--key-file', "/home/rstudio/key.json"
+    )
+)
+
+## Transfer to gcloud
+library(AnVIL)
+.libPaths(c(lib_path, .libPaths()))
+
+AnVIL::gsutil_rsync(
+    bin_path,
+    "gs://anvil-rstudio-bioconductor-test/0.99/3.11/src/contrib/",
+    dry=FALSE
+)

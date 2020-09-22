@@ -265,6 +265,35 @@ gcloud container clusters delete niteshk8scluster
    - Martin's question, we can make sure POD gets evicted.
    - Use flag `--eviction-hard` 
 
+
+### Create kubernetes secret
+
+Create a kubectl secret 
+
+	kubectl create secret generic \
+		bioc-binaries-service-account-auth \
+		--from-file=service_account_key=bioconductor-rpci-280116-6b5690824bc0.json
+
+	kubectl describe secrets/bioc-binaries-service-account-auth
+
+```
+Name:         bioc-binaries-service-account-auth
+Namespace:    default
+Labels:       <none>
+Annotations:  <none>
+
+Type:  Opaque
+
+Data
+====
+service_account_key:  2353 bytes
+```
+
+
+### Add to pod
+
+
+
 #### Create GCE persistent disk - DOES NOT WORK
 
 https://kubernetes.io/docs/concepts/storage/volumes/#gcepersistentdisk
@@ -279,18 +308,3 @@ with your dataset and then serve it in parallel from as many Pods as
 you need. Unfortunately, PDs can only be mounted by a single consumer
 in read-write mode - no simultaneous writers allowed.
 ```
-
-Command to start disk:
-
-	gcloud compute disks create --size=500GB --zone=us-east1-b nt-data-disk
-
-Error state:
-
-```
-~ ❯❯❯ kubectl describe pod/worker-4c6c4
-Events:
-  Type     Reason              Age               From                     Message
-  ----     ------              ----              ----                     -------
-  Normal   Scheduled           42s               default-scheduler        Successfully assigned default/worker-4c6c4 to gke-niteshk8scluster-default-pool-c33c9779-7j09
-  Warning  FailedAttachVolume  3s (x5 over 36s)  attachdetach-controller  AttachVolume.Attach failed for volume "test-mount" : googleapi: Error 400: RESOURCE_IN_USE_BY_ANOTHER_RESOURCE - The disk resource 'projects/bioconductor-rpci-280116/zones/us-east1-b/disks/nt-data-disk' is already being used by 'projects/bioconductor-rpci-280116/zones/us-east1-b/instances/gke-niteshk8scluster-default-pool-c33c9779-jw3l'
- ```
