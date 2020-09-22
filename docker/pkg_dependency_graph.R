@@ -91,9 +91,8 @@ run_install(workers = 8,
             inst = inst)
 
 ## Create PACKAGES.gz and 
-
-tools::write_PACAKGES("/host/binaries")
+tools::write_PACAKGES("/host/binaries", addFiles=TRUE)
 
 ## overwrite PACAKGES.gz in the bucket.
 ## provide secret to gcloud for gsutil to transfer packages
-# anvil::gsutil_rsync("/host/binaries", "gs)
+AnVIL::gsutil_rsync("/host/binaries/", "gs://anvil-rstudio-bioconductor-test/0.99/3.11/src/contrib/", dry=FALSE)
