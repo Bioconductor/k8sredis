@@ -48,24 +48,24 @@ run_install <-
     do <- inst[,"Package"][inst[,"Priority"] %in% "base"]
     deps <- deps[!names(deps) %in% do]
 
-    p <- RedisParam(workers = workers, jobname = "demo",
-                    is.worker = FALSE, tasks=length(deps),
-                    progressbar = TRUE)
-    bpstart(p)
-
     while (length(deps)) {
         deps <- trim(deps, do)
         do <- names(deps)[lengths(deps) == 0L]
+        p <- RedisParam(workers = workers, jobname = "demo",
+                        is.worker = FALSE, tasks=length(do),
+                        progressbar = TRUE)
+        
         ## do the work here
         res <- bplapply(
-            do, kube_install, BPPARAM = p,
+            head(do), kube_install, BPPARAM = p,
             lib = lib_path,
             bin = bin_path
         )
+        break
         message(length(deps), " " , length(do))
         deps <- deps[!names(deps) %in% do]
     }
-    bpstop(p)
+
     res
 }
 
@@ -74,7 +74,7 @@ run_install <-
 dir.create("/host/library", recursive = TRUE)
 dir.create("/host/binaries", recursive = TRUE)
 
-## Test
+## To reload quickly
 deps_rds <- "pkg_dependencies.rds"
 if (!file.exists(deps_rds)) {
     deps <- pkg_depedencies()
@@ -89,3 +89,11 @@ run_install(workers = 8,
             bin_path = "/host/binaries/",
             deps = deps,
             inst = inst)
+
+## Create PACKAGES.gz and 
+
+tools::write_PACAKGES("/host/binaries")
+
+## overwrite PACAKGES.gz in the bucket.
+## provide secret to gcloud for gsutil to transfer packages
+# anvil::gsutil_rsync("/host/binaries", "gs)

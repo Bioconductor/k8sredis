@@ -215,7 +215,7 @@ https://github.com/kubernetes/examples/tree/master/staging/volumes/nfs
 
 ### NFS cluster
 
-Start service NFS
+Start service NFS using these commands
 
 	## NFS volume needs to be 500Gi to accomodate both libraries and binaries
 	kubectl create -f k8s/nfs-server-gce-pv.yaml
@@ -223,6 +223,10 @@ Start service NFS
 	kubectl create -f k8s/nfs-server-service.yaml
 	kubectl create -f k8s/nfs-pv.yaml
 	kubectl create -f k8s/nfs-pvc.yaml
+
+or (apply all configurations at the same time)
+
+	kubectl apply -f k8s/nfs-volume/
 
 Start Redis, Rstudio, Manager and worker pods
 
@@ -232,11 +236,22 @@ Start Redis, Rstudio, Manager and worker pods
 	kubectl create -f k8s/manager-pod.yaml
 	kubectl create -f k8s/worker-jobs.yaml
 
+or 
+
+	kubectl apply -f k8s/bioc-redis/
+
 ### delete k8s cluster
 
-kubectl delete -f k8s/
+Delete persistent volume and bioc-redis
+
+	kubectl delete -f k8s/bioc-redis/
+	kubectl delete -f k8s/nfs-volume/
 
 gcloud container clusters delete niteshk8scluster
+
+### exec into a node
+
+	kubectl exec --stdin --tty pod/manager -- /bin/bash
 
 
 ### TODO
