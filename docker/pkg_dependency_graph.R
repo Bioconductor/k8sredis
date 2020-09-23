@@ -105,8 +105,8 @@ system2('gcloud',
 )
 
 ## Transfer to gcloud
-library(AnVIL)
 .libPaths(c(lib_path, .libPaths()))
+library(AnVIL)
 
 AnVIL::gsutil_rsync(
     bin_path,
