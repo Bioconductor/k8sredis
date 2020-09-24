@@ -57,11 +57,10 @@ run_install <-
 
         ## do the work here
         res <- bplapply(
-            head(do), kube_install, BPPARAM = p,
+            do, kube_install, BPPARAM = p,
             lib = lib_path,
             bin = bin_path
         )
-        break
         message(length(deps), " " , length(do))
         deps <- deps[!names(deps) %in% do]
     }
@@ -74,8 +73,11 @@ run_install <-
 lib_path <- "/host/library"
 bin_path <- "/host/binaries"
 
-dir.create(lib_path, recursive = TRUE)
-dir.create(bin_path, recursive = TRUE)
+if (!file.exists(lib_path))
+    dir.create(lib_path, recursive = TRUE)
+
+if (!file.exists(bin_path))
+    dir.create(bin_path, recursive = TRUE)
 
 ## To reload quickly
 deps_rds <- "pkg_dependencies.rds"
@@ -94,7 +96,7 @@ run_install(workers = 8,
             inst = inst)
 
 ## Create PACKAGES.gz and
-tools::write_PACAKGES(bin_path, addFiles=TRUE)
+tools::write_PACKAGES(bin_path, addFiles=TRUE)
 
 ## authenticate with secret
 system2('gcloud',
@@ -106,6 +108,7 @@ system2('gcloud',
 
 ## Transfer to gcloud
 .libPaths(c(lib_path, .libPaths()))
+BiocManager::install('AnVIL', ask=FALSE)
 library(AnVIL)
 
 AnVIL::gsutil_rsync(
