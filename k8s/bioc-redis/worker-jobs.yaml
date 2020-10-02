@@ -3,7 +3,7 @@ kind: Job
 metadata:
   name: worker
 spec:
-  parallelism: 8
+  parallelism: 6
   template:
     metadata:
       name: worker
@@ -11,13 +11,14 @@ spec:
       containers:
       - name: worker
         image: us.gcr.io/bioconductor-rpci-280116/bioc-redis-worker:devel
+        imagePullPolicy: Always
         resources:
           requests:
-            memory: 800Mi
-            cpu: 500m
+            memory: 3Gi
+            cpu: 2
           limits:
-            memory: 2000Mi
-            cpu: 900m
+            memory: 4Gi
+            cpu: 3
         volumeMounts:
         - mountPath: /host
           name: test-nfs-mount

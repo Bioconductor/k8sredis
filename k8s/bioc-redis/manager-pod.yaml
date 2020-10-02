@@ -8,13 +8,14 @@ spec:
   containers:
     - name: manager
       image: us.gcr.io/bioconductor-rpci-280116/bioc-redis-manager:devel
+      imagePullPolicy: Always
       resources:
         requests:
-          memory: 1000Mi
-          cpu: 500m
+          memory: 1Gi
+          cpu: 1
         limits:
-          memory: 2500Mi
-          cpu: 900m
+          memory: 2Gi
+          cpu: 1
       volumeMounts:
         - name: test-nfs-mount
           mountPath: /host
@@ -26,7 +27,8 @@ spec:
           value: "bioc"
       ports:
         - containerPort: 8787
-      command: ["/init"]
+      command: ["Rscript"]
+      args: ["/usr/local/lib/R/site-library/BiocKubeInstall/script/gce_run.R"]
   restartPolicy: "OnFailure"
   volumes:
   - name: test-nfs-mount

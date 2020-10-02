@@ -14,7 +14,3 @@ RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.c
         && rm -rf /var/lib/apt/lists/*
 
 RUN R -e 'BiocManager::install(c("mtmorgan/RedisParam", "Bioconductor/BiocKubeInstall"))'
-
-COPY manager.R /home/rstudio/
-COPY 01-Renviron /etc/cont-init.d/01-Renviron
-
