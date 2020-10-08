@@ -1,0 +1,9 @@
+FROM us.gcr.io/anvil-gcr-public/anvil-rstudio-bioconductor:0.0.6
+
+RUN apt-get update && \
+	apt-get install -y --no-install-recommends libhiredis-dev && \
+	rm -rf /var/lib/apt/lists/*
+
+RUN R -e 'BiocManager::install("mtmorgan/RedisParam")'
+
+COPY worker.R /home/docker/
