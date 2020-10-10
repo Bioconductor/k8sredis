@@ -7,7 +7,7 @@ metadata:
 spec:
   containers:
     - name: manager
-      image: us.gcr.io/bioconductor-rpci-280116/bioc-redis-manager:devel
+      image: bioconductor/bioc-redis-manager:devel
       imagePullPolicy: Always
       resources:
         requests:
@@ -28,7 +28,7 @@ spec:
       ports:
         - containerPort: 8787
       command: ["Rscript"]
-      args: ["/usr/local/lib/R/site-library/BiocKubeInstall/script/gce_run.R"]
+      args: ["/usr/local/lib/R/site-library/BiocKubeInstall/script/anvil-rstudio-bioconductor-run.R"]
   restartPolicy: "OnFailure"
   volumes:
   - name: test-nfs-mount
