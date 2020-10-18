@@ -9,6 +9,6 @@ spec:
   ports:
     - port: 8787
       nodePort: 30001
-      name: http
+      name: publish-rstudio
   selector:
     app: rstudio
