@@ -27,8 +27,8 @@ spec:
           value: "bioc"
       ports:
         - containerPort: 8787
-      command: ["Rscript"]
-      args: ["/usr/local/lib/R/site-library/BiocKubeInstall/script/anvil-rstudio-bioconductor-run.R"]
+#      command: ["Rscript"]
+#      args: ["/usr/local/lib/R/site-library/BiocKubeInstall/script/anvil-rstudio-bioconductor-run.R"]
   restartPolicy: "OnFailure"
   volumes:
   - name: test-nfs-mount

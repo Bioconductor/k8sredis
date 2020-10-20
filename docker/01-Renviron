@@ -1,0 +1,13 @@
+#!/usr/bin/with-contenv sh
+
+# rocker/ uses S6 to manage container initialization. We'll copy this
+# file to /etc/cont-init.d to place REDIS environment variables in the
+# environment seen in Rstudio server.
+
+# This doesn't allow the REDIS_HOST and REDIS_PORT to be seen from
+# the 'root' user
+
+cat <<EOF >> /usr/local/lib/R/etc/Renviron
+REDIS_HOST="$REDIS_SERVICE_HOST"
+REDIS_PORT="$REDIS_SERVICE_PORT"
+EOF
