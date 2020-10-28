@@ -3,7 +3,7 @@ kind: Job
 metadata:
   name: worker
 spec:
-  parallelism: 6
+  parallelism: 2
   template:
     metadata:
       name: worker
@@ -11,21 +11,14 @@ spec:
       containers:
       - name: worker
         image: bioconductor/bioc-redis-worker:anvil-rstudio-bioconductor
-        imagePullPolicy: Always
-        resources:
-          requests:
-            memory: 3Gi
-            cpu: 2
-          limits:
-            memory: 8Gi
-            cpu: 3
+        imagePullPolicy: Never
         volumeMounts:
-        - mountPath: /host
-          name: test-nfs-mount
+         - mountPath: /host
+           name: host-mount
         command: ["R"]
         args: ["-f", "/home/docker/worker.R"]
       restartPolicy: OnFailure
       volumes:
-      - name: test-nfs-mount
-        persistentVolumeClaim:
-          claimName: nfs
+       - name: host-mount
+         hostPath:
+               path: /host

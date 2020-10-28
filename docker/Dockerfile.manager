@@ -13,6 +13,8 @@ RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.c
 	&& apt-get -y --no-install-recommends install google-cloud-sdk \
 	&& rm -rf /var/lib/apt/lists/*
 
-RUN R -e 'BiocManager::install(c("mtmorgan/RedisParam", "Bioconductor/BiocKubeInstall"))'
+RUN R -e 'BiocManager::install("mtmorgan/RedisParam")'
+
+RUN R -e 'devtools::install_github("Bioconductor/BiocKubeInstall", ref = "depends_apply")'
 
 COPY 01-Renviron /etc/cont-init.d/01-Renviron

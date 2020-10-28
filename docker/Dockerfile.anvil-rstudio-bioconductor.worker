@@ -4,6 +4,8 @@ RUN apt-get update && \
 	apt-get install -y --no-install-recommends libhiredis-dev && \
 	rm -rf /var/lib/apt/lists/*
 
-RUN R -e 'BiocManager::install(c("mtmorgan/RedisParam", "Bioconductor/BiocKubeInstall"))'
+RUN R -e 'BiocManager::install("mtmorgan/RedisParam")'
+
+RUN R -e 'devtools::install_github("Bioconductor/BiocKubeInstall", ref = "depends_apply")'
 
 COPY worker.R /home/docker/
