@@ -1,12 +1,20 @@
-apiVersion: batch/v1
-kind: Job
+apiVersion: apps/v1
+kind: ReplicaSet
 metadata:
-  name: worker
+  name: workcluster
+  labels:
+    tier: workcluster
 spec:
-  parallelism: 2
+  replicas: 2
+  
+  selector:
+    matchLabels:
+      tier: workcluster
+  
   template:
     metadata:
-      name: worker
+      labels:
+        tier: workcluster
     spec:
       containers:
       - name: worker
@@ -17,7 +25,6 @@ spec:
            name: host-mount
         command: ["R"]
         args: ["-f", "/home/docker/worker.R"]
-      restartPolicy: OnFailure
       volumes:
        - name: host-mount
          hostPath:
