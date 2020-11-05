@@ -1,4 +1,4 @@
-FROM us.gcr.io/anvil-gcr-public/anvil-rstudio-bioconductor:0.0.6
+FROM bioconductor/bioconductor_docker:RELEASE_3_12
 
 RUN apt-get update && \
 	apt-get install -y --no-install-recommends libhiredis-dev && \
