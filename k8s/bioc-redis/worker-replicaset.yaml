@@ -5,7 +5,7 @@ metadata:
   labels:
     tier: workcluster
 spec:
-  replicas: 2
+  replicas: 6
   
   selector:
     matchLabels:
