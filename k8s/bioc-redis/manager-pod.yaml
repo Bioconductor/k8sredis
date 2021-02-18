@@ -7,29 +7,28 @@ metadata:
 spec:
   containers:
     - name: manager
-      image: bioconductor/bioc-redis-manager:devel
+      image: bioconductor/bioc-redis:manager
       imagePullPolicy: Always
       resources:
-        requests:
-          memory: 1Gi
-          cpu: 1
-        limits:
-          memory: 2Gi
-          cpu: 1
+	requests:
+	  memory: 1Gi
+	  cpu: 1
+	limits:
+	  memory: 2Gi
+	  cpu: 1
       volumeMounts:
-        - name: test-nfs-mount
-          mountPath: /host
-        - name: service-key
-          mountPath: /home/rstudio/key.json
-          subPath: bioconductor-rpci-280116-6b5690824bc0.json
+	- name: test-nfs-mount
+	  mountPath: /host
+	- name: service-key
+	  mountPath: /home/rstudio/key.json
+	  subPath: bioc-binaries.json
       env:
-        - name: PASSWORD
-          value: "bioc"
+	- name: PASSWORD
+	  value: "bioc"
       ports:
-        - containerPort: 8787
-#      command: ["Rscript"]
-#      args: ["-e", "BiocKubeInstall::script_runner()"]
-/usr/local/lib/R/site-library/BiocKubeInstall/script/anvil-rstudio-bioconductor-run.R"]
+	- containerPort: 8787
+      command: ["Rscript"]
+      args: ["-e", "BiocKubeInstall::kube_run('3.13', image_name = 'bioc_docker', '/host/library_3_13', '/host/binaries_3_13', parallelism=14L)"]
   restartPolicy: "OnFailure"
   volumes:
   - name: test-nfs-mount
@@ -39,5 +38,5 @@ spec:
     secret:
       secretName: bioc-binaries-service-account-auth
       items:
-        - key: service_account_key
-          path: bioconductor-rpci-280116-6b5690824bc0.json
+	- key: service_account_key
+	  path: bioc-binaries.json

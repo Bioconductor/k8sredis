@@ -1,194 +1,144 @@
-18 May, 2019
+# k8sredis - Kubernetes application to create Bioconductor package binaries
 
-# Work in progress: current state
+Author:
 
-Recent updates
+1. Martin Morgan
 
-- Use dockerhub images; separate 'manager' and 'worker'.
-- Document use on gcloud
-- Re-organized files for easier build & deploy
+2. Nitesh Turaga
 
-## Start minikube or gcloud
+This kubernetes app is used to create binary packages for Bioconductor
+and store them on Google cloud storage.
 
-Use minikube for (local) development, or gcloud for scalable deployment.
+## Docker images
 
-Start the minikube VM with
+The image for the manager is pod is built from the file
+`Dockerfile.manager` and is available on the Bioconductor organization
+page on Dockerhub as,
 
-	minikube start
+	bioconductor/bioc-redis:manager
 
-For gcloud, see [below][].
+The images for the worker pods are build from the files under the
+following pattern, `Dockerfile.worker.RELEASE_X_Y`. For example, the
+image for the worker for Bioconductor release 3.12 is under
+`Dockerfile.worker.RELEASE_3_12`. These images are available on
+Dockerhub as
 
-[below]: #google-cloud-work-in-progress
+	bioconductor/bioc-redis:RELEASE_3_13 
 
-## Create application in kubernetes
+	bioconductor/bioc-redis:RELEASE_3_12
 
-In kubernetes, create a redis service and running redis application,
-an _RStudio_ service, an _RStudio_ 'manager', and five _R_ worker
-'jobs'.
+To build the docker images locally,
 
-	kubectl apply -f k8s/
+	docker build -t bioconductor/bioc-redis:manager -f \
+		docker/Dockerfile.manager docker
 
-The two services, redis and manager pods, and worker pods should all
-be visible and healthy with
+	docker build -t bioconductor/bioc-redis-worker:RELEASE_3_12 -f \
+		docker/Dockerfile.worker.RELEASE_3_12 docker
 
-	kubectl get all
+The docker images are build on top of the
+`bioconductor/bioconductor_docker` images. The manager node inherits
+from the `devel` image, and the worker nodes inherit from the
+respective Bioconductor release version needed for packages, i.e,
+`RELEASE_3_12` or `RELEASE_3_13` and so on.
 
-## Log in to R
+The `manager` image has _Google cloud SDK_ installed along with some
+settings for Redis which are not needed on the worker image.
 
-Via your browser on the port 300001 at the ip address returned by
-minikube or gcloud
+## NFS server
 
-	## For minikube, use...
-	minikube ip
+The manager pod and the worker pods share an NFS server as a volume
+mount in this K8s application. The volume mount logic and code is
+taken from the kubernetes examples given at this link:
 
-	## For gcloud, use any 'EXTERNAL-IP' from
-	kubectl get nodes --output wide
+	https://github.com/kubernetes/examples/tree/master/staging/volumes/nfs
 
-e.g.,
+## Quick start for k8sredis build binaries
 
-	http://192.168.99.101:30001
+Assumption: The user has a service account key from project with
+permission as Storage account admin. Refer to vignette from
+https://github.com/Bioconductor/BiocKubeInstall package for more
+details
 
-this will provide access to RStudio, with user `rstudio` and password
-`bioc`. Alternatively, connect to R at the command line with
+Step 0: Start k8s cluster on GCE
 
-	kubectl exec -it manager -- /bin/bash
+	gcloud container clusters create \
+			--zone us-east1-b \
+			--num-nodes=6 \
+			--machine-type=e2-standard-4 niteshk8scluster
 
-## Use
+	gcloud container clusters get-credentials niteshk8scluster
 
-Define a simple function
+Step 1: Start service NFS using this commands
 
-	fun = function(i) {
-		Sys.sleep(1)
-		Sys.info()[["nodename"]]
-	}
+	kubectl apply -f k8s/nfs-volume/
 
-Create a `RedisParam` to connect to the job queue and communicate with
-the workers, and use `BiocParallel::register()` to make this the
-default back-end
+Step 2: Create a kubectl secret. You must have the file
+`bioc-binaries.json` on your local machine. To create a kubernetes
+secret and download it you need to be a service account admin. Please
+refer to the documentation refering to _Create kubernetes secret_.
 
-	library(RedisParam)
+	kubectl create secret generic \
+		bioc-binaries-service-account-auth \
+		--from-file=service_account_key=bioc-binaries.json
 
-	p <- RedisParam(workers = 5, jobname = "demo", is.worker = FALSE)
-	register(bpstart(p))
+	## Describe key
+	kubectl describe secrets/bioc-binaries-service-account-auth
 
-Use `bplapply()` for parallel evaluation
+Step 3: Start Redis, Rstudio, Manager and worker pods
 
-	system.time(res <- bplapply(1:13, fun))
-	table(unlist(res))
+	kubectl apply -f k8s/bioc-redis/
 
-## Clean up
+Step 4: Delete cluster
 
-Quit and exit the R manager (or simply leave your RStudio session in
-the browser)
+	kubectl delete -f k8s/bioc-redis/
+	kubectl delete -f k8s/nfs-volume/
+	
+	gcloud container clusters delete niteshk8scluster
 
-	> q()     # R
-	# exit    # manager
+## Logging into a pod
 
-Clean up kubernetes
+	kubectl exec --stdin --tty pod/manager -- /bin/bash
 
-	$ kubectl delete -f k8s/
+### Create kubernetes secret
 
-Stop minikube or gcloud
+Create a service account key. The service account key has 'Storage
+Admin' permissions, so it can upload the binaries to a google
+bucket.
 
-	## minikube...
-	minikube stop
+    ## Create service account
+    gcloud iam service-accounts create bioc-binaries \
+	   --display-name "Storage Admin SA" \
+	   --description "Bioc Binaries storage admin"
 
-	## ..or gcloud
-	gcloud container clusters delete [CLUSTER_NAME]
+	## List service account
+	gcloud iam service-accounts list \
+		--filter bioc-binaries@fancy-house-303821.iam.gserviceaccount.com
 
-# Google cloud [WORK IN PROGRESS]
+	## Download service account key locally
+	gcloud iam service-accounts keys create \
+		bioc-binaries.json \
+		--iam-account bioc-binaries@fancy-house-303821.iam.gserviceaccount.com
 
-One uses Google kubernetes service rather than minikube. Make sure
-that minikube is not running
+	## Add 'Storage Admin' role to service account.
+	gcloud projects add-iam-policy-binding fancy-house-303821 \
+		--member \
+		"serviceAccount:bioc-binaries@fancy-house-303821.iam.gserviceaccount.com" \
+		--role "roles/storage.admin"
 
-	minikube stop
+## Detailed launch sequence of the K8s app (not recommended)
 
-## Enable kubernetes service
+Launch the NFS server first,
 
-Make sure the Kubernetes Engine API is enables by visiting
-`https://console.cloud.google.com`.
+	kubectl create -f k8s/nfs-server-gce-pv.yaml
+	kubectl create -f k8s/nfs-server-rc.yaml
+	kubectl create -f k8s/nfs-server-service.yaml
+	kubectl create -f k8s/nfs-pv.yaml
+	kubectl create -f k8s/nfs-pvc.yaml
 
-Make sure the appropriate project is selected (dropdown in the blue
-menu bar).
+then the bioc-redis application,
 
-Choose `APIs & Services` the hamburger (top left) dropdown, and `+
-ENABLE APIS & SERVICES` (center top).
-
-## Configure gcloud
-
-At the command line, make sure the correct account is activated and
-the correct project associated with the account
-
-	gcloud auth list
-	gclod config list
-
-Use `gcloud config help` / `gcloud config set help` and eventually
-`gcloud config set core/project VALUE` to udpate the project and
-perhaps other information, e.g., `compute/zone` and `compute/region`.
-
-## Start and authenticate the gcloud kubernetes engine
-
-A guide to [exposing applications][1] guide is available; we'll most
-closely follow the section [Creating a Service of type NodePort][2].
-
-Create a cluster (replace `[CLUSTER_NAME]` with an appropriate
-identifier)
-
-	gcloud container clusters create [CLUSTER_NAME]
-
-Authenticate with the cluster
-
-	gcloud container clusters get-credentials [CLUSTER_NAME]
-
-Create a whole in the firewall that surrounds our cloud (30001 is from
-k8s/rstudio-service.yaml)
-
-	gcloud compute firewall-rules create test-node-port --allow tcp:30001
-
-At this stage, we can use `kubectl apply ...` etc., as above.
-
-[1]: https://cloud.google.com/kubernetes-engine/docs/how-to/exposing-apps
-[2]: https://cloud.google.com/kubernetes-engine/docs/how-to/exposing-apps#creating_a_service_of_type_nodeport
-
-# Docker images
-
-The Docker images are available as [bioc-redis-manager:devel][] and
-[bioc-redis-worker:devel][].
-
-	docker build -t us.gcr.io/bioconductor-rpci-280116/bioc-redis-manager:devel \
-		-f docker/Dockerfile.manager docker
-
-	docker build -t us.gcr.io/bioconductor-rpci-280116/bioc-redis-worker:devel \
-		-f docker/Dockerfile.worker docker
-
-[bioc-redis-manager:devel]: us.gcr.io/bioconductor-rpci-280116/bioc-redis-manager
-[bioc-redis-worker:devel]: us.gcr.io/bioconductor-rpci-280116/bioc-redis-worker
-
-The _R_ manager docker file -- is from `rocker/rstudio:3.6.0`
-providing _R_ _RStudio_ server, and additional infrastructure to
-support [RedisParam][].  The _R_ worker docker file -- is from
-`rocker/r-base:latest` providing _R_, and additional infrastructure to
-support [RedisParam][].
-
-If one were implementing a particularly workflow, likely the worker
-(and perhaps manager) images would be built from a more complete image
-like [Bioconductor/AnVIL_Docker][] customized with required packages.
-
-[RedisParam]: https://github.com/mtmorgan/RedisParam
-[Bioconductor/AnVIL_Docker]: https://github.com/Bioconductor/AnVIL_Docker
-
-For use of local images, one needs to build these in the minikube environment
-
-	eval $(minikube docker-env)
-	docker build ...
-
-# TODO
-
-A little further work will remove the need to create the
-`RedisParam()` in the R session.
-
-The create / delete steps can be coordinated by a [helm] chart, so
-that a one-liner will give a URL to a running RStudio backed by
-arbitary number of workers.
-
-[helm]: https://helm.sh/
+	kubectl create -f k8s/bioc-redis/rstudio-service.yaml
+	kubectl create -f k8s/bioc-redis/redis-service.yaml
+	kubectl create -f k8s/bioc-redis/redis-pod.yaml
+	kubectl create -f k8s/bioc-redis/manager-pod.yaml
+	kubectl create -f k8s/bioc-redis/worker-jobs.yaml
