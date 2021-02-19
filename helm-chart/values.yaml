@@ -5,15 +5,28 @@
 # user-oriented configuration
 #
 
-workerPoolSize: 5             # Number of workers in the cluster
+workerPoolSize: 17             # Number of workers in the cluster
+biocVersion: 3.13
+dockerImageName: bioc-docker   # Image name for which binaries are created
+
 
 # Manager image
-managerImage: mtmorgan/bioc-redis-manager
-managerImageTag: latest
+managerImage: bioconductor/bioc-redis
+managerImageTag: manager
 
 # Worker image
-workerImage: mtmorgan/bioc-redis-worker
-workerImageTag: latest
+workerImage: bioconductor/bioc-redis
+workerImageTag: RELEASE_3_13   # NOTE: Needs to be switched
+
+
+# Volume mount
+volumeMountName: bioc-nfs-mount
+volumeMountPath: /host
+volumeMountSize: 200Gi
+
+# service key name
+serviceKey: bioc-binaries.json
+
 
 # RStudio access
 rstudioPort: 30001            # Port for user connection; must be >= 30000
@@ -24,7 +37,7 @@ rstudioPassword: bioc         # RStudio password on manager
 #
 
 # image management (manager, worker, redis)
-pullPolicy: IfNotPresent
+pullPolicy: Always
 restartPolicy: OnFailure
 
 # internal RStudio-specific config
@@ -36,5 +49,5 @@ rstudio:
 # internal redis-specific config
 redis:
   redisImage: redis
-  redisImageTag: 5.0
+  redisImageTag: '5.0'
   containerPort: 6379

@@ -1,7 +1,8 @@
 apiVersion: v1
 appVersion: "1.0"
-description: A Helm chart for Bioconductor RedisParam using Rstudio
+description: A Helm chart for Bioconductor RedisParam using the bioconductor_docker images.
 name: k8s-redis-bioc-chart
-version: 0.1.0
+version: 0.1.1
 maintainers:
   - name: Nitesh Turaga
+  - name: Martin Morgan
