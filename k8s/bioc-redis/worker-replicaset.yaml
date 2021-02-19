@@ -14,25 +14,25 @@ spec:
   template:
     metadata:
       labels:
-	tier: workcluster
+        tier: workcluster
     spec:
       containers:
       - name: worker
-	image: bioconductor/bioc-redis:RELEASE_3_13
-	imagePullPolicy: Always
-	resources:
-	  requests:
-	    memory: 2Gi
-	    cpu: 1
-	  limits:
-	    memory: 4Gi
-	    cpu: 1.1
-	volumeMounts:
-	 - mountPath: /host
-	   name: test-nfs-mount
-	command: ["R"]
-	args: ["-f", "/home/docker/worker.R"]
+        image: bioconductor/bioc-redis:RELEASE_3_13
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: 2Gi
+            cpu: 1
+          limits:
+            memory: 4Gi
+            cpu: 1.1
+        volumeMounts:
+         - mountPath: /host
+           name: test-nfs-mount
+        command: ["R"]
+        args: ["-f", "/home/docker/worker.R"]
       volumes:
       - name: test-nfs-mount
-	persistentVolumeClaim:
-	  claimName: nfs
+        persistentVolumeClaim:
+          claimName: nfs

@@ -5,10 +5,10 @@
 # user-oriented configuration
 #
 
-workerPoolSize: 17             # Number of workers in the cluster
-biocVersion: 3.13
-dockerImageName: bioc-docker   # Image name for which binaries are created
-
+workerPoolSize: 17              # Number of workers in the cluster
+biocVersion: '3.13' 
+dockerImageName: 'bioc_docker'  # Image name for which binaries are created
+workerImageTag: RELEASE_3_13    # Needs to match the biocVersion
 
 # Manager image
 managerImage: bioconductor/bioc-redis
@@ -16,8 +16,6 @@ managerImageTag: manager
 
 # Worker image
 workerImage: bioconductor/bioc-redis
-workerImageTag: RELEASE_3_13   # NOTE: Needs to be switched
-
 
 # Volume mount
 volumeMountName: bioc-nfs-mount
@@ -26,7 +24,6 @@ volumeMountSize: 200Gi
 
 # service key name
 serviceKey: bioc-binaries.json
-
 
 # RStudio access
 rstudioPort: 30001            # Port for user connection; must be >= 30000

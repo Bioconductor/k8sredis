@@ -28,7 +28,7 @@ spec:
       ports:
         - containerPort: {{ .Values.rstudioPort }}
       command: ["Rscript"]
-      args: ["-e", "BiocKubeInstall::kube_run('3.13', image_name = 'bioc_docker', parallelism=14L)"]
+      args: ["-e", "BiocKubeInstall::kube_run('{{ .Values.biocVersion }}', image_name = '{{ .Values.dockerImageName }}', parallelism = {{ .Values.workerPoolSize }})"]
   restartPolicy: {{ .Values.restartPolicy | quote}}
   volumes:
   - name: {{ .Values.volumeMountName }}
