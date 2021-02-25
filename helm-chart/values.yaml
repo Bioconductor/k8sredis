@@ -5,9 +5,9 @@
 # user-oriented configuration
 #
 
-workerPoolSize: 17              # Number of workers in the cluster
-biocVersion: '3.13' 
+workerPoolSize: 6              # Number of workers in the cluster
 dockerImageName: 'bioc_docker'  # Image name for which binaries are created
+biocVersion: '3.13'
 workerImageTag: RELEASE_3_13    # Needs to match the biocVersion
 
 # Manager image

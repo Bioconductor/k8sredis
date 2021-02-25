@@ -28,7 +28,7 @@ spec:
       ports:
         - containerPort: 8787
       command: ["Rscript"]
-      args: ["-e", "BiocKubeInstall::kube_run('3.13', image_name = 'bioc_docker', parallelism=14L)"]
+      args: ["-e", "BiocKubeInstall::kube_run('3.13', image_name = 'bioc_docker', worker_pool_size=6L)"]
   restartPolicy: "OnFailure"
   volumes:
   - name: test-nfs-mount

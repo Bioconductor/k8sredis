@@ -23,7 +23,7 @@ image for the worker for Bioconductor release 3.12 is under
 `Dockerfile.worker.RELEASE_3_12`. These images are available on
 Dockerhub as
 
-	bioconductor/bioc-redis:RELEASE_3_13 
+	bioconductor/bioc-redis:RELEASE_3_13
 
 	bioconductor/bioc-redis:RELEASE_3_12
 
@@ -61,10 +61,13 @@ details
 
 Step 0: Start k8s cluster on GCE
 
-	gcloud container clusters create \
-			--zone us-east1-b \
-			--num-nodes=6 \
-			--machine-type=e2-standard-4 niteshk8scluster
+    gcloud container clusters create \
+        --zone us-east1-b \
+        --num-nodes 4 \
+        --enable-autoscaling \
+        --min-nodes 1 \
+        --max-nodes 6 \
+        --machine-type=e2-standard-4 niteshk8scluster
 
 	gcloud container clusters get-credentials niteshk8scluster
 
@@ -92,7 +95,7 @@ Step 4: Delete cluster
 
 	kubectl delete -f k8s/bioc-redis/
 	kubectl delete -f k8s/nfs-volume/
-	
+
 	gcloud container clusters delete niteshk8scluster
 
 ## Logging into a pod
@@ -105,8 +108,8 @@ Create a service account key. The service account key has 'Storage
 Admin' permissions, so it can upload the binaries to a google
 bucket.
 
-    ## Create service account
-    gcloud iam service-accounts create bioc-binaries \
+	## Create service account
+	gcloud iam service-accounts create bioc-binaries \
 	   --display-name "Storage Admin SA" \
 	   --description "Bioc Binaries storage admin"
 
